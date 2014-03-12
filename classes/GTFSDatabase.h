@@ -13,11 +13,7 @@
 
 + (GTFSDatabase *) open;
 + (BOOL) create;
-+ (BOOL) exists;
-+ (BOOL) existsInBundle;
-+ (BOOL) copyToCache;
-+ (BOOL) cacheFileIsStale;
-+ (NSString *) getCachePath;
-+ (NSString *) getResourcePath;
++ (void) activateNewAutoUpdateBuildIfAvailable;
++ (NSString *) getNewAutoUpdateDatabaseBuildPath;
 
 @end

@@ -6,3 +6,4 @@ Pods/Pods.xcodeproj/xcuserdata/
 vendor
 test.log
 profile
+secrets.h

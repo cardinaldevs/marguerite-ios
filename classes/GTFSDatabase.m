@@ -9,7 +9,23 @@
 #import "GTFSDatabase.h"
 #import "CSVImporter.h"
 
+@interface GTFSDatabase()
+
++ (BOOL) existsAutoUpdateBuild;
++ (BOOL) existsNewAutoUpdateBuild;
++ (BOOL) copyNewAutoUpdateDatabaseBuild;
++ (BOOL) deleteNewAutoUpdateBuild;
++ (BOOL) isNewAutoUpdateDatabaseBuildInProgress;
+
+@end
+
 @implementation GTFSDatabase
+
+BOOL static __isNewAutoUpdateTempDatabaseBuildInProgress;
+
++ (BOOL) isNewAutoUpdateDatabaseBuildInProgress {
+    return __isNewAutoUpdateTempDatabaseBuildInProgress;
+}
 
 /* 
  Open the GTFS database and return a reference to it.
@@ -17,15 +33,22 @@
 + (GTFSDatabase *) open
 {
     GTFSDatabase *db = nil;
-    if ((db = [self databaseWithPath:[self getCachePath]])) {
+    NSString* databasePath = [self existsAutoUpdateBuild]?[self getAutoUpdatedDatabasePath]:[self getResourcePath];
+    if ((db = [self databaseWithPath:databasePath])) {
         [db setShouldCacheStatements:YES];
         if (![db open]) {
             NSLog(@"Could not open GTFS db.");
             return nil;
         }
     }
-    
     return db;
+}
+
++ (void) activateNewAutoUpdateBuildIfAvailable {
+    if (![self isNewAutoUpdateDatabaseBuildInProgress]&&[self existsNewAutoUpdateBuild]) {
+        [self copyNewAutoUpdateDatabaseBuild];
+        [self deleteNewAutoUpdateBuild];
+    }
 }
 
 /*
@@ -34,9 +57,11 @@
  */
 + (BOOL) create
 {
-    if (![self delete]) {
+    if (![self deleteNewAutoUpdateBuild]) {
         return NO;
     }
+    
+    __isNewAutoUpdateTempDatabaseBuildInProgress = YES;
     
     CSVImporter *importer = [[CSVImporter alloc] init];
     
@@ -77,9 +102,11 @@
     NSLog(@"Reindexing...");
     [importer reindex];
     
+    __isNewAutoUpdateTempDatabaseBuildInProgress = NO;
+    
     NSLog(@"Import complete!");
     
-    BOOL dbExists = [self exists];
+    BOOL dbExists = [self existsNewAutoUpdateBuild];
     
     NSLog(@"DB file exists: %s", dbExists ? "true" : "false");
     
@@ -89,11 +116,33 @@
 /*
  Returns YES if gtfs.db in Caches directory was deleted (or didn't exist), NO otherwise.
  */
-+ (BOOL) delete {
++ (BOOL) deleteAutoUpdateBuild {
     NSError* error;
-    if ([self exists]) {
+    if ([self existsAutoUpdateBuild]) {
         @try {
-            [[NSFileManager defaultManager] removeItemAtPath:[self getCachePath] error:&error];
+            [[NSFileManager defaultManager] removeItemAtPath:[self getAutoUpdatedDatabasePath] error:&error];
+        }
+        @catch (NSException *exception) {
+            NSLog(@"delete - Exception: %@", [exception reason]);
+            return NO;
+        }
+        @finally {
+            if (error) {
+                NSString *messageString = [error localizedDescription];
+                messageString = [NSString stringWithFormat:@"%@", messageString];
+                NSLog(@"delete - Error: %@", messageString);
+                return NO;
+            }
+        }
+    }
+    return YES;
+}
+
++ (BOOL) deleteNewAutoUpdateBuild {
+    NSError* error;
+    if ([self existsNewAutoUpdateBuild]) {
+        @try {
+            [[NSFileManager defaultManager] removeItemAtPath:[self getNewAutoUpdateDatabaseBuildPath] error:&error];
         }
         @catch (NSException *exception) {
             NSLog(@"delete - Exception: %@", [exception reason]);
@@ -112,37 +161,33 @@
 }
 
 /*
- Returns YES if gtfs.db exists in Caches directory, NO otherwise.
- */
-+ (BOOL) exists
-{
-    return [[NSFileManager defaultManager] fileExistsAtPath:[self getCachePath]];
-}
-
-/*
  Returns YES if gtfs.db exists in app bundle, NO otherwise.
  */
-+ (BOOL) existsInBundle
++ (BOOL) existsAutoUpdateBuild
 {
-    return [[NSFileManager defaultManager] fileExistsAtPath:[self getResourcePath]];
+    return [[NSFileManager defaultManager] fileExistsAtPath:[self getAutoUpdatedDatabasePath]];
 }
 
++ (BOOL) existsNewAutoUpdateBuild
+{
+    return [[NSFileManager defaultManager] fileExistsAtPath:[self getNewAutoUpdateDatabaseBuildPath]];
+}
 /*
  Copy the gfts.db file from the Resources folder (bundled with the app) to the Caches directory (/Library/Caches).
  Returns YES if file was copied, returns NO otherwise.
  */
-+ (BOOL) copyToCache
++ (BOOL) copyNewAutoUpdateDatabaseBuild
 {
-    NSString *dest = [self getCachePath];
+    NSString *dest = [self getAutoUpdatedDatabasePath];
     NSError* error;
-    NSString* src = [self getResourcePath];
+    NSString* src = [self getNewAutoUpdateDatabaseBuildPath];
 
-    if (![self existsInBundle]) {
-        NSLog(@"copyDatabaseToCacheIfNeeded - GTFS db not in bundle.");
+    if (![self existsNewAutoUpdateBuild]) {
+        NSLog(@"copyNewAutoUpdateDatabaseToAutoUpdate - GTFS auto update db not available.");
         return NO;
     }
     
-    [self delete];
+    [self deleteAutoUpdateBuild];
     
     @try {
         [[NSFileManager defaultManager] copyItemAtPath:src toPath:dest error:&error];
@@ -159,21 +204,9 @@
     return YES;
 }
 
-/*
- Returns YES if gtfs.db in Caches folder does not exist or is different from gtfs.db in bundle.
-*/
-+ (BOOL) cacheFileIsStale
-{
-    return (![self exists] || !([[NSFileManager defaultManager] contentsEqualAtPath:[self getResourcePath] andPath:[self getCachePath]]));
-}
-
-/*
- Returns the path where the GTFS database will be located in the cache.
- */
-+ (NSString *) getCachePath
-{
-    NSString* cachesDirectory=[NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) objectAtIndex:0];
-    return [cachesDirectory stringByAppendingPathComponent:@"gtfs.db"];
++ (NSString *) getNewAutoUpdateDatabaseBuildPath {
+     NSString* pathToDocumentsDirectory = [NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) objectAtIndex:0];
+    return [pathToDocumentsDirectory stringByAppendingPathComponent:@"gtfs_auto_update_build.db"];
 }
 
 /*
@@ -182,6 +215,15 @@
 + (NSString *) getResourcePath
 {
     return [[NSBundle mainBundle] pathForResource:@"gtfs" ofType:@"db"];
+}
+
+/*
+ The path where the GTFS database exists in the Resources folder (bundled with the app).
+ */
++ (NSString *) getAutoUpdatedDatabasePath
+{
+    NSString* pathToDocumentsDirectory = [NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) objectAtIndex:0];
+    return [pathToDocumentsDirectory stringByAppendingPathComponent:@"gtfs.db"];
 }
 
 @end
