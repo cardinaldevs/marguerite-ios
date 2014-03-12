@@ -9,8 +9,8 @@
 #ifndef marguerite_secrets_h
 #define marguerite_secrets_h
 
-#define MARGUERITE_REALTIME_XML_FEED    @"***REMOVED***"
-#define MARGUERITE_VEHICLE_IDS_URL      @"***REMOVED***"
+#define MARGUERITE_REALTIME_XML_FEED    @""
+#define MARGUERITE_VEHICLE_IDS_URL      @""
 #define GOOGLE_MAPS_API_KEY             @""
 #define MARGUERITE_TRANSIT_DATA_URL     @""
 #define TESTFLIGHT_APPLICATION_TOKEN    @""
