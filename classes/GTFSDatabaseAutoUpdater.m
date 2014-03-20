@@ -67,7 +67,7 @@ NSString* const TRANSIT_UNZIP_TO_DIR = @"TransitFilesUnzipped";
         NSError* error;
         BOOL unzipSuccess = [SSZipArchive unzipFileAtPath:zipFileFullPath toDestination:unzipDirFullPath overwrite:YES password:nil error:&error];
 //        [self logUnzippedDirContents];
-        NSLog(@"Unzip result : %d. error message : %@",unzipSuccess, [error localizedDescription]);
+        NSLog(@"Unzip result : %@. %@",unzipSuccess?@"success":@"fail", unzipSuccess?@"":[error localizedDescription]);
         return unzipSuccess;
     }
     return NO;
@@ -78,10 +78,10 @@ NSString* const TRANSIT_UNZIP_TO_DIR = @"TransitFilesUnzipped";
     NSError* error;
     if ([fileManager fileExistsAtPath:unzipDirFullPath]) {
         BOOL dirCleanSuccess = [fileManager removeItemAtPath:unzipDirFullPath error:&error];
-        NSLog(@"Deleting unzip dir result: %d error : %@",dirCleanSuccess,[error localizedDescription]);
+        NSLog(@"Deleting unzip dir result : %@. %@",dirCleanSuccess?@"success":@"fail", dirCleanSuccess?@"":[error localizedDescription]);
         if (dirCleanSuccess) {
             BOOL dirCreateSuccess = [[NSFileManager defaultManager] createDirectoryAtPath:unzipDirFullPath withIntermediateDirectories:YES attributes:Nil error:&error];
-            NSLog(@"Creating unzip dir result : %d. error message %@",dirCreateSuccess,[error localizedDescription]);
+            NSLog(@"Creating unzip dir result : %@. %@",dirCreateSuccess?@"success":@"fail", dirCreateSuccess?@"":[error localizedDescription]);
         }
         return dirCleanSuccess;
     }
