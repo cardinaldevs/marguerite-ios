@@ -11,8 +11,17 @@
 #import <GoogleMaps/GoogleMaps.h>
 #import "secrets.h"
 #import "MUtil.h"
+#import "GTFSDatabaseAutoUpdater.h"
+
+@interface AppDelegate()
+
+@property (nonatomic, strong) GTFSDatabaseAutoUpdater* gtfsAutoUpdater;
+
+@end
 
 @implementation AppDelegate
+
+@synthesize gtfsAutoUpdater;
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
@@ -26,28 +35,15 @@
     [Instabug setCommentIsRequired:YES];
     [Instabug setColorTheme:InstabugColorThemeRed];
     [Instabug setHeaderColor:[MUtil colorFromHexString:@"8C1515"]];
-    
-    // Copy gfts.db file from app bundle to Caches directory or create gtfs.db if needed
-    if ([GTFSDatabase existsInBundle]) {
-        if ([GTFSDatabase cacheFileIsStale]) {
-            NSLog(@"GTFS file stale in Caches.");
-            if (![GTFSDatabase copyToCache]) {
-                [GTFSDatabase create];
-            } else {
-                NSLog(@"Copied GTFS file from bundle to Caches.");
-            }
-        }
-    } else {
-        [GTFSDatabase create];
-    }
-    
     [GMSServices provideAPIKey:GOOGLE_MAPS_API_KEY];
-    
     return YES;
 }
 
+
+
 - (void)applicationWillResignActive:(UIApplication *)application
 {
+    [gtfsAutoUpdater cancelAutoUpdate];
     // Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
     // Use this method to pause ongoing tasks, disable timers, and throttle down OpenGL ES frame rates. Games should use this method to pause the game.
 }
@@ -66,6 +62,9 @@
 - (void)applicationDidBecomeActive:(UIApplication *)application
 {
     // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
+    [GTFSDatabase activateNewAutoUpdateBuildIfAvailable];
+    self.gtfsAutoUpdater = [[GTFSDatabaseAutoUpdater alloc] init];
+    [gtfsAutoUpdater startAutoUpdate];
 }
 
 - (void)applicationWillTerminate:(UIApplication *)application
