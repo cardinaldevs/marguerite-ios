@@ -21,7 +21,7 @@
 #import "StopTime.h"
 #import "Util.h"
 #import "GTFSDatabase.h"
-#import "GTFSDatabaseAutoUpdater.h"
+#import "GTFSUnarchiver.h"
 
 @interface CSVImporter()
 
@@ -43,7 +43,7 @@
 - (NSString *)parseForFile:(NSString *)file
 {
     NSError *error = nil;
-    NSString* unzippedDirPath = [GTFSDatabaseAutoUpdater fullPathToLocalTransitUnzipDir];
+    NSString* unzippedDirPath = [GTFSUnarchiver fullPathToDownloadedTransitUnzipDir];
 //    NSString *inputPath = [[NSBundle mainBundle] pathForResource:file ofType:@"txt"];
     NSString *inputPath = [unzippedDirPath stringByAppendingPathComponent:file];
     inputPath = [inputPath stringByAppendingPathExtension:@"txt"];

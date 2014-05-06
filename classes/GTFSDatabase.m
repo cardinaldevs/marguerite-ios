@@ -44,18 +44,18 @@ BOOL static __isNewAutoUpdateTempDatabaseBuildInProgress;
     return db;
 }
 
-+ (void) activateNewAutoUpdateBuildIfAvailable {
++ (BOOL) activateNewAutoUpdateBuildIfAvailable {
     if (![self isNewAutoUpdateDatabaseBuildInProgress]&&[self existsNewAutoUpdateBuild]) {
-        [self copyNewAutoUpdateDatabaseBuild];
-        [self deleteNewAutoUpdateBuild];
+        return [self copyNewAutoUpdateDatabaseBuild] && [self deleteNewAutoUpdateBuild];
     }
+    return YES;
 }
 
 /*
  Uses GTFS text files to create an sqlite3 database in the Caches directory.
  Returns YES if gtfs.db exists in Caches directory afterwards, NO otherwise.
  */
-+ (BOOL) create
++ (BOOL) create:(NSObject<GTFSDatabaseCreationProgressDelegate>*)creationProgressDelegate
 {
     if (![self deleteNewAutoUpdateBuild]) {
         return NO;
@@ -66,40 +66,52 @@ BOOL static __isNewAutoUpdateTempDatabaseBuildInProgress;
     CSVImporter *importer = [[CSVImporter alloc] init];
     
     NSLog(@"Importing Agency...");
+    [creationProgressDelegate updatingStepNumber:1 outOfTotalSteps:12 currentStepLabel:@"Importing Agency..."];
     [importer addAgency];
     
     NSLog(@"Importing Calendar Dates...");
+    [creationProgressDelegate updatingStepNumber:2 outOfTotalSteps:12 currentStepLabel:@"Importing Calendar Dates..."];
     [importer addCalendarDate];
     
     NSLog(@"Importing Routes...");
+    [creationProgressDelegate updatingStepNumber:3 outOfTotalSteps:12 currentStepLabel:@"Importing Routes..."];
     [importer addRoute];
     
     NSLog(@"Importing Shapes...");
+    [creationProgressDelegate updatingStepNumber:4 outOfTotalSteps:12 currentStepLabel:@"Importing Shapes..."];
     [importer addShape];
     
     NSLog(@"Importing Stops...");
+    [creationProgressDelegate updatingStepNumber:5 outOfTotalSteps:12 currentStepLabel:@"Importing Stops..."];
     [importer addStop];
     
     NSLog(@"Importing Trips...");
+    [creationProgressDelegate updatingStepNumber:6 outOfTotalSteps:12 currentStepLabel:@"Importing Trips..."];
     [importer addTrip];
     
     NSLog(@"Importing StopTime...");
+    [creationProgressDelegate updatingStepNumber:7 outOfTotalSteps:12 currentStepLabel:@"Importing StopTime..."];
     [importer addStopTime];
     
     NSLog(@"Vacumming...");
+    [creationProgressDelegate updatingStepNumber:8 outOfTotalSteps:12 currentStepLabel:@"Vacumming..."];
     [importer vacuum];
     
     NSLog(@"Reindexing...");
+    [creationProgressDelegate updatingStepNumber:9 outOfTotalSteps:12 currentStepLabel:@"Reindexing..."];
     [importer reindex];
     
     //For convinience. This will add an extra column 'routes' which will contain comma seperated route numbers passing through this stop
     NSLog(@"Adding routes to stops...");
+    [creationProgressDelegate updatingStepNumber:10 outOfTotalSteps:12 currentStepLabel:@"Adding routes to stops..."];
     [importer addStopRoutes];
     
     NSLog(@"Vacumming...");
+    [creationProgressDelegate updatingStepNumber:11 outOfTotalSteps:12 currentStepLabel:@"Vacumming..."];
     [importer vacuum];
     
     NSLog(@"Reindexing...");
+    [creationProgressDelegate updatingStepNumber:12 outOfTotalSteps:12 currentStepLabel:@"Reindexing..."];
     [importer reindex];
     
     __isNewAutoUpdateTempDatabaseBuildInProgress = NO;

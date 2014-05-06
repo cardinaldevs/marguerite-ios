@@ -7,15 +7,14 @@
 //
 
 #import "AppDelegate.h"
-#import "GTFSDatabase.h"
 #import <GoogleMaps/GoogleMaps.h>
 #import "secrets.h"
 #import "MUtil.h"
-#import "GTFSDatabaseAutoUpdater.h"
+#import "AutoUpdateSplashController.h"
 
 @interface AppDelegate()
 
-@property (nonatomic, strong) GTFSDatabaseAutoUpdater* gtfsAutoUpdater;
+@property (nonatomic, strong) AutoUpdateSplashController* updateSplashController;
 
 @end
 
@@ -62,9 +61,13 @@
 - (void)applicationDidBecomeActive:(UIApplication *)application
 {
     // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
-    [GTFSDatabase activateNewAutoUpdateBuildIfAvailable];
-    self.gtfsAutoUpdater = [[GTFSDatabaseAutoUpdater alloc] init];
-    [gtfsAutoUpdater startAutoUpdate];
+    if (!_autoUpdateInProgress) {
+        _autoUpdateInProgress = YES;
+        UIStoryboard *sb = [UIStoryboard storyboardWithName:@"MainStoryboard_iPhone" bundle:nil];
+        _updateSplashController = [sb instantiateViewControllerWithIdentifier:@"AutoUpdateSplash"];
+        _updateSplashController.modalPresentationStyle = UIModalPresentationFullScreen;
+        [_window.rootViewController presentViewController:_updateSplashController animated:NO completion:nil];
+    }
 }
 
 - (void)applicationWillTerminate:(UIApplication *)application

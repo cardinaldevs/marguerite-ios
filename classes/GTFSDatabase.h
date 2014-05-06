@@ -9,11 +9,17 @@
 #import <Foundation/Foundation.h>
 #import "FMDatabase.h"
 
+@protocol GTFSDatabaseCreationProgressDelegate <NSObject>
+
+- (void) updatingStepNumber:(NSInteger)currentStep outOfTotalSteps:(NSInteger)totalSteps currentStepLabel:(NSString*)stepDesc;
+
+@end
+
 @interface GTFSDatabase : FMDatabase
 
 + (GTFSDatabase *) open;
-+ (BOOL) create;
-+ (void) activateNewAutoUpdateBuildIfAvailable;
++ (BOOL) create:(NSObject<GTFSDatabaseCreationProgressDelegate>*)creationProgressDelegate;
++ (BOOL) activateNewAutoUpdateBuildIfAvailable;
 + (NSString *) getNewAutoUpdateDatabaseBuildPath;
 
 @end
