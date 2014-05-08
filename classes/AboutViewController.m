@@ -7,6 +7,7 @@
 //
 
 #import "AboutViewController.h"
+#import "Constants.h"
 
 #define FEEDBACK_SECTION_INDEX                  0
 #define FEEDBACK_BUTTON_ROW                     0
@@ -18,8 +19,6 @@
 #define CONTACT_MARGUERITE_WEBSITE_ROW          2
 
 #define APP_SECTION_INDEX                       3
-
-#define CLUB_SECTION_INDEX                      5
 
 @interface AboutViewController ()
 
@@ -56,10 +55,27 @@
         case APP_SECTION_INDEX:
             [self openURL:@"https://github.com/cardinaldevs/marguerite-ios"];
             break;
-        case CLUB_SECTION_INDEX:
-            [self openURL:@"http://sadevs.stanford.edu"];
-            break;
     }
+}
+
+- (NSString *)tableView:(UITableView *)tableView titleForFooterInSection:(NSInteger)section {
+    if (section==0) {
+        NSDate* lastUpdateDate = [[NSUserDefaults standardUserDefaults] objectForKey:GTFS_DB_LAST_UPDATE_DATE_KEY];
+        if (lastUpdateDate!=nil) {
+            NSDateFormatter* dateFormatter = [[NSDateFormatter alloc] init];
+            [dateFormatter setDateFormat:@"MMMM dd yyyy"];
+            return [NSString stringWithFormat:@"Schedules last updated on %@",[dateFormatter stringFromDate:lastUpdateDate]];
+        }
+    } else if (section==1) {
+        return @"Unclaimed items donated after 30 days.";
+    } else if (section==2) {
+        return @"This app is open-source. All of the code is available on Github, and anyone can contribute to improving the app.";
+    } else if (section==3) {
+        return @"This app is open-source. All of the code is available on Github, and anyone can contribute to improving the app.";
+    } else if (section==4) {
+        return @"Cardinal Devs is an upcoming student organization that develops, maintains, and improves open-source, student-run technology at Stanford University. Applications for new members are accepted at the start of each quarter.";
+    }
+    return @"";
 }
 
 - (void) openFeedbackView {
