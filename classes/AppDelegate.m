@@ -8,13 +8,13 @@
 
 #import "AppDelegate.h"
 #import <GoogleMaps/GoogleMaps.h>
-#import "secrets.h"
-#import "MUtil.h"
-#import "AutoUpdateSplashController.h"
+#import "STAN_MARG_secrets.h"
+#import "STAN_MARG_MUtil.h"
+#import "STAN_MARG_AutoUpdateSplashController.h"
 
 @interface AppDelegate()
 
-@property (nonatomic, strong) AutoUpdateSplashController* updateSplashController;
+@property (nonatomic, strong) STAN_MARG_AutoUpdateSplashController* updateSplashController;
 
 @end
 
@@ -31,7 +31,7 @@
     [Instabug setEmailIsRequired:YES];
     [Instabug setCommentIsRequired:YES];
     [Instabug setColorTheme:InstabugColorThemeRed];
-    [Instabug setHeaderColor:[MUtil colorFromHexString:@"8C1515"]];
+    [Instabug setHeaderColor:[STAN_MARG_MUtil colorFromHexString:@"8C1515"]];
     [GMSServices provideAPIKey:GOOGLE_MAPS_API_KEY];
     return YES;
 }
@@ -58,7 +58,7 @@
     // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
     if (!_autoUpdateInProgress) {
         _autoUpdateInProgress = YES;
-        UIStoryboard *sb = [UIStoryboard storyboardWithName:@"MainStoryboard_iPhone" bundle:nil];
+        UIStoryboard *sb = [UIStoryboard storyboardWithName:@"STAN_MARG_MainSB_iPhone" bundle:nil];
         _updateSplashController = [sb instantiateViewControllerWithIdentifier:@"AutoUpdateSplash"];
         _updateSplashController.modalPresentationStyle = UIModalPresentationFullScreen;
         [_window.rootViewController presentViewController:_updateSplashController animated:NO completion:nil];
